@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<!--
+  Where the payment gateway's page sends the browser after a card payment
+  (docs/CARD_PAYMENTS_AR.md): card-return asks the gateway, completes the
+  payment if it was paid, then redirects here (the secret CARD_RETURN_URL) with
+  ?status=paid|pending|failed&platform=web|android|ios&lang=ar|en|ckb.
+  Nothing on this page is believed: it only says what card-return found, and
+  where to go back (the app's tab on the web, the app on a phone). The
+  package is activated on the server, never here.
+
+  Static and light (no Flutter): flutter build web copies it into build/web,
+  so it is published with the web wherever the web is (NOT published yet).
+  Its script is a file of its own (card-return.js): the site's CSP
+  (web/_headers) runs no inline script but index.html's, by its hash.
+  The Kurdish text needs a native speaker's review (KURDISH_REVIEW_AR.md).
+-->
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <title>قطعة</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    /* The app's tokens (lib/core/theme): white page, ink text, muted second
+       line; «ليل بابل» in dark. The app's typeface where the web has it. */
+    @font-face {
+      font-family: "QitaaSans";
+      src: url("assets/assets/fonts/QitaaSans-Regular.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "QitaaSans";
+      src: url("assets/assets/fonts/QitaaSans-SemiBold.ttf") format("truetype");
+      font-weight: 600;
+      font-display: swap;
+    }
+    :root {
+      --background: #FFFFFF;
+      --ink: #222222;
+      --muted: #5E5E5E;
+      --line: #DDDDDD;
+      --success: #1E7A46;
+      --danger: #B42318;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #0E1322;
+        --ink: #F2F2F2;
+        --muted: #B3B9C8;
+        --line: #2B3450;
+        --success: #7CCB9A;
+        --danger: #F49A90;
+      }
+    }
+    html, body { margin: 0; background: var(--background); color: var(--ink); }
+    body {
+      font-family: "QitaaSans", "IBM Plex Sans Arabic", "Noto Sans Arabic", Tahoma, system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+      line-height: 1.5;
+    }
+    main { max-width: 430px; width: 100%; text-align: center; }
+    .mark {
+      width: 56px; height: 56px; margin: 0 auto 16px;
+      border-radius: 50%;
+      border: 2px solid var(--line);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 600;
+    }
+    .mark.paid { color: var(--success); border-color: var(--success); }
+    .mark.failed { color: var(--danger); border-color: var(--danger); }
+    .mark.pending { color: var(--muted); }
+    h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+    p { font-size: 16px; color: var(--muted); margin: 0 0 8px; }
+  </style>
+  <script src="card-return.js" defer></script>
+</head>
+<body>
+  <main>
+    <div id="mark" class="mark pending" aria-hidden="true">…</div>
+    <h1 id="title">نتحقّق من الدفع</h1>
+    <p id="body">ارجع إلى تطبيق «قطعة».</p>
+    <p id="next"></p>
+  </main>
+  <noscript>
+    <p lang="ar">ارجع إلى «قطعة»: نتحقّق من الدفع هناك.</p>
+  </noscript>
+</body>
+</html>

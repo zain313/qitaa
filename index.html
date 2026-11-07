@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <!--
+    The path the app is served from. `flutter build web --base-href /qitaa/`
+    (scripts/build_web_release.sh, BASE_HREF) fills it in; "/" by default.
+  -->
+  <base href="/qitaa/">
+
+  <meta charset="UTF-8">
+
+  <!--
+    The connections the first frame waits for, opened at once (launch review
+    2026-11-06): the renderer (CanvasKit) comes from www.gstatic.com and the
+    engine's fallback font (Roboto) from fonts.gstatic.com, so their
+    connections open while the app downloads. Both are fetched in CORS mode,
+    hence crossorigin. scripts/build_web_release.sh drops the gstatic line
+    with LOCAL_CANVASKIT=1 (the renderer comes from this host then).
+    main.dart.js is asked for early too, at the foot of the body (why there:
+    beside it).
+  -->
+  <link id="qitaa-canvaskit-cdn" rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- The same viewport the engine puts in its place: nothing moves when it does. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="قطعة — خرائط بيوت سكنية معتمدة مع جولة 3D مجانية.">
+  <meta name="color-scheme" content="light dark">
+
+  <!--
+    The browser's bar: the app's page on a phone, the backdrop around the
+    phone column from 600 (AppPalette.background / .backdrop, AppWebFrame).
+    The first match wins; the engine appends its own theme-color later, after
+    these. test/web/web_shell_test.dart keeps the values in step.
+  -->
+  <meta name="theme-color" media="(max-width: 599.98px) and (prefers-color-scheme: dark)" content="#0E1322">
+  <meta name="theme-color" media="(min-width: 600px) and (prefers-color-scheme: dark)" content="#090C16">
+  <meta name="theme-color" media="(min-width: 600px)" content="#F5F1EB">
+  <meta name="theme-color" content="#FFFFFF">
+
+  <!-- Added to a home screen -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="قطعة">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- A shared link -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="قطعة">
+  <meta property="og:title" content="قطعة">
+  <meta property="og:description" content="خرائط بيوت سكنية معتمدة مع جولة 3D مجانية.">
+  <meta property="og:locale" content="ar_IQ">
+
+  <title>قطعة</title>
+
+  <style>
+    /* What shows around and under the app: the page on a phone, the backdrop
+       around the phone column from 600, light and dark. */
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #FFFFFF;
+    }
+    @media (prefers-color-scheme: dark) {
+      html, body { background: #0E1322; }
+    }
+    @media (min-width: 600px) {
+      html, body { background: #F5F1EB; }
+    }
+    @media (min-width: 600px) and (prefers-color-scheme: dark) {
+      html, body { background: #090C16; }
+    }
+
+    /* The loading screen: the logo on the brand paper, the size and place the
+       splash takes over at (kWordmarkWidth, dead centre), so the handover
+       doesn't show. Light in both themes, as the splash and the app icon. */
+    #qitaa-loading {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #F5F1EB;
+      transition: opacity 200ms ease-out;
+    }
+    #qitaa-loading.qitaa-done {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #qitaa-loading .qitaa-logo {
+      position: relative;
+      width: 168px;
+      aspect-ratio: 680 / 312;
+    }
+    #qitaa-loading .qitaa-logo img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #qitaa-loading { transition: none; }
+    }
+
+    /* No first frame (the files didn't come, or a script failed): a line in
+       the three languages and «أعد المحاولة» take the logo's place, in the
+       app's ink and its one primary (AppPalette.light: ink, brandGradient). */
+    #qitaa-loading .qitaa-failure {
+      display: none;
+      box-sizing: border-box;
+      max-width: 400px;
+      padding: 0 16px;
+      font: 16px/1.5 system-ui, sans-serif;
+      color: #222222;
+      text-align: center;
+    }
+    #qitaa-loading .qitaa-failure p {
+      margin: 0 0 12px;
+      /* No word left alone on the last line. */
+      text-wrap: balance;
+    }
+    #qitaa-loading .qitaa-failure button {
+      margin-top: 12px;
+      min-width: 160px;
+      min-height: 48px;
+      padding: 12px 24px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(to left, #2A49BB, #1D3CA4, #19359A);
+      color: #FFFFFF;
+      font: 600 16px/1.5 system-ui, sans-serif;
+      cursor: pointer;
+    }
+    #qitaa-loading .qitaa-failure button:focus-visible {
+      outline: 2px solid #222222;
+      outline-offset: 2px;
+    }
+    #qitaa-loading.qitaa-failed .qitaa-logo { display: none; }
+    #qitaa-loading.qitaa-failed .qitaa-failure { display: block; }
+
+    noscript p {
+      margin: 0;
+      padding: 24px 16px 0;
+      font: 16px/1.5 system-ui, sans-serif;
+      color: #222222;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- dir here only: on <html> it would turn English and phone fields
+       right-to-left too (the app sets its own direction). -->
+  <div id="qitaa-loading" dir="rtl" role="img" aria-label="قطعة">
+    <div class="qitaa-logo">
+      <img src="assets/assets/images/splash/qitaa_body.png" alt="">
+      <img src="assets/assets/images/splash/qitaa_dot_right.png" alt="">
+      <img src="assets/assets/images/splash/qitaa_dot_left.png" alt="">
+    </div>
+    <div class="qitaa-failure" role="alert">
+      <p lang="ar">لم يكتمل تحميل «قطعة». تحقّق من الإنترنت، ثم أعد المحاولة.</p>
+      <p lang="ckb">«قطعة» بە تەواوی بار نەبوو. ئینتەرنێتەکەت بپشکنە، پاشان دوگمەی خوارەوە دابگرە.</p>
+      <p lang="en" dir="ltr">Qet'a didn't finish loading. Check your internet, then tap the button below.</p>
+      <button type="button" id="qitaa-retry" lang="ar">أعد المحاولة</button>
+    </div>
+  </div>
+  <noscript>
+    <p dir="rtl" lang="ar">يحتاج «قطعة» إلى تفعيل JavaScript في المتصفح.</p>
+    <p dir="rtl" lang="ckb">«قطعة» پێویستی بە چالاککردنی JavaScript هەیە لە وێبگەڕەکەدا.</p>
+    <p dir="ltr" lang="en">Qet'a needs JavaScript turned on in your browser.</p>
+  </noscript>
+  <script>
+    (function () {
+      var loading = document.getElementById('qitaa-loading');
+      var drawn = false;
+
+      // Once Flutter draws its first frame (the splash, on the same paper),
+      // the loading screen fades and goes.
+      window.addEventListener('flutter-first-frame', function () {
+        drawn = true;
+        if (!loading) return;
+        loading.classList.add('qitaa-done');
+        document.documentElement.classList.add('qitaa-ready');
+        setTimeout(function () { loading.remove(); }, 250);
+      }, { once: true });
+
+      // No first frame: the 12–14 MB didn't all come (a dropped connection,
+      // a CDN that doesn't answer), or a script failed. The logo stayed up
+      // with no word and no way out. The line and «أعد المحاولة» take its
+      // place; the load goes on, and a frame drawn after all still ends it.
+      function failed() {
+        if (drawn || !loading || loading.classList.contains('qitaa-failed')) {
+          return;
+        }
+        loading.classList.add('qitaa-failed');
+        // The words are read now, not one picture.
+        loading.removeAttribute('role');
+        loading.removeAttribute('aria-label');
+      }
+      setTimeout(failed, 40000);
+      // A script that didn't load: its error doesn't bubble, so it is caught
+      // on the way down.
+      window.addEventListener('error', function (event) {
+        if (event.target instanceof HTMLScriptElement) failed();
+      }, true);
+      // The loader's promise (the engine, the renderer, the app) failing.
+      window.addEventListener('unhandledrejection', failed);
+      document.getElementById('qitaa-retry').addEventListener('click',
+        function () { location.reload(); });
+    })();
+  </script>
+  <!-- Generated by `flutter build web`: loads the engine, the renderer and the app. -->
+  <script src="flutter_bootstrap.js" async></script>
+  <!--
+    The app, asked for now: flutter_bootstrap.js asks for it only once it has
+    arrived and run, a round trip later (2 s on 3G), and that request then
+    finds it on its way. Last and low, as the loader itself asks: over HTTP/2
+    (Cloudflare Pages) the browser puts each request behind every earlier one
+    of the same or a higher priority, and the server sends them in that
+    order. A high preload in the head kept the logo and the bootstrap waiting
+    for the whole 1.26 MB (an HTTP/2 link, launch review 2026-11-06: the
+    logo at 9.8 s instead of 2.2 on Slow 4G, at 32 s instead of 7 on 3G); a
+    low one in the head still held the bootstrap and a dot. Here the logo and
+    the bootstrap come as without it, and the app sooner (0.6 s on Slow 4G,
+    4 s on 3G).
+  -->
+  <link rel="preload" href="main.dart.js" as="script" fetchpriority="low">
+</body>
+</html>

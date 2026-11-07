@@ -1,0 +1,33 @@
+# Security headers for the web app (docs/WEB_AR.md, «رؤوس الأمان»).
+# Cloudflare Pages and Netlify read this file from the site's root: flutter
+# build web copies it into build/web, and scripts/build_web_release.sh fits
+# it to the build (the Supabase project, Google's CDN or not) and checks the
+# page's inline script hash. firebase.json carries the same headers;
+# test/web/web_shell_test.dart keeps the two and web/index.html in step.
+# GitHub Pages can't send headers: don't host there.
+#
+# CSP, source by source:
+# - script-src: the app's files; web/index.html's one inline script, by its
+#   hash (change the script, change the hash, or the loading screen stays);
+#   WebAssembly (CanvasKit); the CanvasKit renderer from Google's CDN, by
+#   its path only: www.gstatic.com also serves AngularJS and other scripts,
+#   and the whole host would let injected HTML run code through them.
+#   LOCAL_CANVASKIT=1 drops Google from script-src altogether.
+# - style-src 'unsafe-inline': the engine writes its own <style> elements.
+# - img-src, connect-src: the Supabase project (photos, data, sign-in; wss
+#   for realtime should it come); Google's fonts CDN (its /s/ path) for the
+#   glyphs the app's fonts lack (the engine's fallback fonts); Sentry's
+#   ingest.
+# - frame-ancestors 'none' (and X-Frame-Options): no site frames the app.
+#   frame-src 'none': the 3D tour opens in a tab of its own, never framed.
+# Strict-Transport-Security: one year; add includeSubDomains and preload
+# only once every subdomain of the site's domain is on https.
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-4QumYUSaUC6i+NlTFJ8U2zwom93Y91pr2Lov9NOXvg0=' 'wasm-unsafe-eval' https://www.gstatic.com/flutter-canvaskit/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tiupqlnvbejmlakdyqau.supabase.co; font-src 'self' data: https://fonts.gstatic.com/s/; connect-src 'self' https://tiupqlnvbejmlakdyqau.supabase.co wss://tiupqlnvbejmlakdyqau.supabase.co https://www.gstatic.com/flutter-canvaskit/ https://fonts.gstatic.com/s/ https://*.sentry.io; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), magnetometer=(), gyroscope=(), accelerometer=(), browsing-topics=()
+  Cache-Control: no-cache
